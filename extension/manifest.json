@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "ResearchAdapter Summarizer",
+  "version": "0.1.0",
+  "description": "Summarize research PDFs to ~1 page with source-aligned navigation.",
+  "action": {
+    "default_title": "Summarize PDF",
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

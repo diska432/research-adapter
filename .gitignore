@@ -1,0 +1,7 @@
+GETTING_STARTED.md
+server/.env
+server/README.md
+.venv/*
+server/__pycache__
+server/summarizer/__pycache__
+.DS_Store
