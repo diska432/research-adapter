@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "ResearchAdapter",
-  "version": "0.1.0",
-  "description": "Summarize research PDFs to ~1 page with source-aligned navigation.",
+  "version": "1.0.0",
+  "description": "Summarize research PDFs to ~1 page with source-aligned navigation using AI. Click any sentence to jump to the source page.",
   "action": {
     "default_title": "Summarize PDF",
     "default_popup": "popup.html"
