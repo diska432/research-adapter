@@ -2,12 +2,15 @@ from fastapi import FastAPI, UploadFile, File, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 import uvicorn
+import logging
 from typing import List, Dict, Any, Optional
 
 from .summarizer.pdf_extractor import extract_pages
-from .summarizer.summarizer import summarize_sentences
-from .summarizer.aligner import align_summary_to_pages
-from .summarizer.llm_summarizer import llm_generate_summary
+from .summarizer.llm_summarizer import llm_summarize_pdf
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(default_response_class=ORJSONResponse)
 
@@ -27,34 +30,61 @@ def health() -> Dict[str, str]:
 @app.post("/summarize")
 async def summarize(
 	file: UploadFile = File(...),
-	max_words: int = 500,
-	llm: bool = Query(default=False),
-	model: Optional[str] = Query(default="gpt-4o-mini"),
+	max_words: int = Query(default=500),
+	llm: bool = Query(default=True),  # Default to True for pure LLM approach
+	model: Optional[str] = Query(default="gemini-1.5-flash"),
 	token_limit: int = Query(default=800),
 ) -> Dict[str, Any]:
-	content: bytes = await file.read()
-	pages = extract_pages(content)
-	if not pages:
-		return {"summary": [], "stats": {"num_pages": 0, "num_sentences": 0, "max_words": max_words}}
+	logger.info(f"Starting summarization: max_words={max_words}, llm={llm}, model={model}, token_limit={token_limit}")
+	
+	try:
+		content: bytes = await file.read()
+		logger.info(f"Read {len(content)} bytes from PDF")
+		
+		pages = extract_pages(content)
+		logger.info(f"Extracted {len(pages)} pages")
+		
+		if not pages:
+			logger.warning("No pages extracted from PDF")
+			return {"summary": [], "stats": {"num_pages": 0, "num_sentences": 0, "max_words": max_words, "method": "none"}}
 
-	sentences = summarize_sentences(pages, max_words=max_words)
-	aligned = align_summary_to_pages(sentences, pages)
-
-	result: Dict[str, Any] = {
-		"summary": aligned,
-		"stats": {
-			"num_pages": len(pages),
-			"num_sentences": len(aligned),
-			"max_words": max_words,
-		},
-	}
-	if llm:
-		try:
-			coherent = llm_generate_summary(aligned, model=model or "gpt-4o-mini", token_limit=token_limit)
-			result["llm_summary"] = coherent
-		except Exception as e:  # return extractive even if LLM fails
-			result["llm_error"] = str(e)
-	return result
+		# Log page info for debugging
+		total_sentences = sum(len(p.get("sentences", [])) for p in pages)
+		logger.info(f"Total sentences across all pages: {total_sentences}")
+		
+		if llm:
+			try:
+				logger.info("Starting Gemini LLM summarization")
+				result = llm_summarize_pdf(pages, model=model or "gemini-1.5-flash", token_limit=token_limit)
+				logger.info("Gemini LLM summarization completed successfully")
+				return result
+			except Exception as e:
+				logger.error(f"Gemini LLM summarization failed: {e}")
+				return {"error": str(e), "summary": [], "stats": {"num_pages": len(pages), "num_sentences": 0, "max_words": max_words, "method": "failed"}}
+		else:
+			# Fallback: return first few sentences from each page
+			fallback_summary = []
+			for page in pages[:3]:  # First 3 pages
+				sentences = page.get("sentences", [])[:3]  # First 3 sentences per page
+				for sent in sentences:
+					fallback_summary.append({
+						"text": sent,
+						"page": page.get("page", 1),
+						"score": 0.5
+					})
+			return {
+				"summary": fallback_summary,
+				"stats": {
+					"num_pages": len(pages),
+					"num_sentences": len(fallback_summary),
+					"max_words": max_words,
+					"method": "fallback"
+				}
+			}
+		
+	except Exception as e:
+		logger.error(f"Summarization failed: {e}", exc_info=True)
+		return {"error": str(e), "summary": [], "stats": {"num_pages": 0, "num_sentences": 0, "max_words": max_words, "method": "error"}}
 
 
 if __name__ == "__main__":

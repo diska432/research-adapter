@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "ResearchAdapter Summarizer",
+  "name": "ResearchAdapter",
   "version": "0.1.0",
   "description": "Summarize research PDFs to ~1 page with source-aligned navigation.",
   "action": {

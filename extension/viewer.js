@@ -2,7 +2,14 @@ function getQueryData() {
   const url = new URL(window.location.href);
   const dataStr = url.searchParams.get("data");
   if (!dataStr) return null;
-  try { return JSON.parse(decodeURIComponent(dataStr)); } catch { return null; }
+  try { 
+    const parsed = JSON.parse(decodeURIComponent(dataStr));
+    console.log("Viewer received data:", parsed);
+    return parsed;
+  } catch (e) { 
+    console.error("Failed to parse viewer data:", e);
+    return null; 
+  }
 }
 
 function openPdfAtPage(pdfUrl, page, queryText) {
@@ -24,11 +31,25 @@ function renderLlmSummary(llm) {
 }
 
 function renderSummary(summary, stats, pdfUrl) {
+  console.log("Rendering summary:", { summary, stats, pdfUrl });
+  
   const meta = document.getElementById("meta");
   meta.textContent = `${stats.num_sentences} sentences, from ${stats.num_pages} pages (budget ${stats.max_words} words)`;
   const list = document.getElementById("summaryList");
+  const empty = document.getElementById("empty");
   list.innerHTML = "";
-  summary.forEach((item) => {
+  
+  if (!summary || summary.length === 0) {
+    console.log("No summary items to render");
+    if (empty) empty.style.display = "block";
+    return;
+  }
+  
+  console.log(`Rendering ${summary.length} summary items`);
+  if (empty) empty.style.display = "none";
+  
+  summary.forEach((item, index) => {
+    console.log(`Item ${index}:`, item);
     const li = document.createElement("li");
     li.dataset.page = String(item.page);
     li.title = `Click to go to page ${item.page} (double-click for context)`;
@@ -72,8 +93,14 @@ function renderSummary(summary, stats, pdfUrl) {
 }
 
 (function init(){
+  console.log("Viewer initializing...");
   const payload = getQueryData();
-  if (!payload) return;
+  if (!payload) {
+    console.error("No payload received");
+    return;
+  }
+  
+  console.log("Processing payload:", payload);
   renderLlmSummary(payload.llm || "");
   renderSummary(
     payload.summary || [],

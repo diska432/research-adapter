@@ -13,10 +13,10 @@ except Exception:
 
 @dataclass
 class Settings:
-	openai_api_key: Optional[str] = None
+	gemini_api_key: Optional[str] = None
 
 	@classmethod
 	def load(cls) -> "Settings":
 		return cls(
-			openai_api_key=os.getenv("OPENAI_API_KEY"),
+			gemini_api_key=os.getenv("GEMINI_API_KEY"),
 		)
