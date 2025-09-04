@@ -1,6 +1,7 @@
 # ResearchAdapter: PDF Summarizer with Source Alignment
 
 This project provides a Chrome extension and a Python FastAPI backend to generate a concise summary of research PDFs with clickable references that navigate to the source page.
+The public Chrome extension is pending review. Once it is up, the server side URL will be updated.
 
 ## Prerequisites
 - Python 3.12

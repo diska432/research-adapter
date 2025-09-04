@@ -101,7 +101,7 @@ async function init() {
       const tab = await getActiveTab();
       const { bytes, url } = await fetchPdfBytesFromTab(tab.id);
 
-      const serverUrl = serverInput.value || "http://localhost:8000";
+      const serverUrl = serverInput.value || "https://research-adapter.onrender.com";
       const maxWords = Math.max(100, Math.min(1200, parseInt(maxWordsInput.value || "500", 10)));
       const llmModel = llmModelInput.value || "gemini-1.5-flash";
       const tokenLimit = Math.max(200, Math.min(2000, parseInt(tokenLimitInput.value || "800", 10)));
