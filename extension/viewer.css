@@ -1,25 +1,45 @@
-.container{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;padding:16px;max-width:800px}
-h1{font-size:18px;margin:0 0 8px}
+body{margin:0;background:#fff;color:#1a1a1a;transition:background .25s,color .25s}
 
-#llmSummary{border:1px solid #dcdcdc;background:#fbfbfb;padding:12px 16px;border-radius:6px;margin-bottom:10px;line-height:1.6}
+.container{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;padding:16px;max-width:800px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.header h1{font-size:18px;margin:0}
+
+#themeToggle{background:none;border:1px solid #ccc;border-radius:6px;font-size:18px;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:inherit;transition:border-color .25s}
+#themeToggle:hover{border-color:#888}
+
+#llmSummary{border:1px solid #dcdcdc;background:#fbfbfb;padding:12px 16px;border-radius:6px;margin-bottom:10px;line-height:1.6;transition:background .25s,border-color .25s}
 #llmSummary p{margin:0.4em 0}
 #llmSummary ul,#llmSummary ol{margin:0.4em 0;padding-left:1.4em}
 #llmSummary li{margin:0.2em 0;border:none;padding:0}
 #llmSummary li:hover{background:none;cursor:default}
 #llmSummary strong{font-weight:600}
 #llmSummary em{font-style:italic}
-#llmSummary code{background:#f0f0f0;padding:1px 4px;border-radius:3px;font-size:0.92em}
-#llmSummary pre{background:#f5f5f5;padding:8px 12px;border-radius:4px;overflow-x:auto}
+#llmSummary code{background:#f0f0f0;padding:1px 4px;border-radius:3px;font-size:0.92em;transition:background .25s}
+#llmSummary pre{background:#f5f5f5;padding:8px 12px;border-radius:4px;overflow-x:auto;transition:background .25s}
 #llmSummary pre code{background:none;padding:0}
-#llmSummary blockquote{border-left:3px solid #ccc;margin:0.4em 0;padding:0.2em 0 0.2em 12px;color:#555}
+#llmSummary blockquote{border-left:3px solid #ccc;margin:0.4em 0;padding:0.2em 0 0.2em 12px;color:#555;transition:color .25s,border-color .25s}
 
-#meta{font-size:12px;color:#444;margin-bottom:12px}
+#meta{font-size:12px;color:#444;margin-bottom:12px;transition:color .25s}
 ol{padding-left:20px}
-#summaryList > li{margin:8px 0;padding:8px;border-radius:6px;border:1px solid #e0e0e0}
+#summaryList > li{margin:8px 0;padding:8px;border-radius:6px;border:1px solid #e0e0e0;transition:background .25s,border-color .25s}
 #summaryList > li:hover{background:#fafafa;cursor:pointer}
 .item-text p{display:inline;margin:0}
-.page{font-size:11px;color:#666;margin-left:6px}
-.score{font-size:11px;color:#999;margin-left:6px}
+.page{font-size:11px;color:#666;margin-left:6px;transition:color .25s}
+.score{font-size:11px;color:#999;margin-left:6px;transition:color .25s}
 
 .katex{font-size:1em}
 .katex-display{margin:0.5em 0;overflow-x:auto}
+
+/* ── Dark theme ── */
+body.dark{background:#1a1a2e;color:#e0e0e0}
+body.dark #themeToggle{border-color:#555}
+body.dark #themeToggle:hover{border-color:#999}
+body.dark #llmSummary{background:#252540;border-color:#3a3a55}
+body.dark #llmSummary code{background:#2e2e4a}
+body.dark #llmSummary pre{background:#2e2e4a}
+body.dark #llmSummary blockquote{border-color:#555;color:#aaa}
+body.dark #meta{color:#aaa}
+body.dark #summaryList > li{border-color:#3a3a55}
+body.dark #summaryList > li:hover{background:#252540}
+body.dark .page{color:#8888aa}
+body.dark .score{color:#666688}

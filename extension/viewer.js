@@ -134,8 +134,24 @@ function renderSummary(summary, stats, pdfUrl) {
   });
 }
 
+function initThemeToggle() {
+  const btn = document.getElementById("themeToggle");
+  const saved = localStorage.getItem("theme");
+  if (saved === "dark") document.body.classList.add("dark");
+  btn.textContent = document.body.classList.contains("dark") ? "\u2600" : "\u263E";
+
+  btn.addEventListener("click", () => {
+    document.body.classList.toggle("dark");
+    const isDark = document.body.classList.contains("dark");
+    localStorage.setItem("theme", isDark ? "dark" : "light");
+    btn.textContent = isDark ? "\u2600" : "\u263E";
+  });
+}
+
 (async function init() {
   console.log("Viewer initializing...");
+  initThemeToggle();
+
   const payload = await getQueryData();
   if (!payload) {
     console.error("No payload received");
