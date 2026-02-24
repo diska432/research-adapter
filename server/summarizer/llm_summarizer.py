@@ -57,7 +57,7 @@ def extract_page_references(text: str) -> List[Dict[str, Any]]:
 
 def llm_summarize_pdf(
 	pages: List[Dict[str, Any]],
-	model: str = "gemini-1.5-flash",
+	model: str = "gemini-2.5-flash",
 	token_limit: int = 800,
 	api_key: Optional[str] = None,
 ) -> Dict[str, Any]:
@@ -104,7 +104,22 @@ Task: Write a coherent summary (~1 page, <= {token_limit} words). Include page n
 		model_instance = genai.GenerativeModel(model)
 		response = model_instance.generate_content(prompt)
 		
-		llm_summary = response.text or ""
+		# Handle response text extraction (works for both old and new API versions)
+		llm_summary = ""
+		if hasattr(response, 'text') and response.text:
+			llm_summary = response.text
+		elif hasattr(response, 'candidates') and response.candidates:
+			# Fallback for newer API structure
+			candidate = response.candidates[0]
+			if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
+				parts = candidate.content.parts
+				if parts:
+					llm_summary = parts[0].text if hasattr(parts[0], 'text') else str(parts[0])
+		
+		if not llm_summary:
+			logger.warning("Gemini response has no text content. Response structure: %s", dir(response))
+			raise RuntimeError("Gemini API returned empty response")
+		
 		logger.info(f"Received Gemini summary, length: {len(llm_summary)}")
 		
 		# Extract sentences with page references

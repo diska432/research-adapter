@@ -1,15 +1,55 @@
-function getQueryData() {
+const KATEX_AUTO_RENDER_OPTIONS = {
+  delimiters: [
+    { left: "$$", right: "$$", display: true },
+    { left: "\\[", right: "\\]", display: true },
+    { left: "$", right: "$", display: false },
+    { left: "\\(", right: "\\)", display: false },
+  ],
+  throwOnError: false,
+};
+
+function renderRichText(container, rawText) {
+  const html = marked.parse(rawText);
+  container.innerHTML = html;
+  renderMathInElement(container, KATEX_AUTO_RENDER_OPTIONS);
+}
+
+function renderRichInline(container, rawText) {
+  const html = marked.parseInline(rawText);
+  container.innerHTML = html;
+  renderMathInElement(container, KATEX_AUTO_RENDER_OPTIONS);
+}
+
+async function getQueryData() {
   const url = new URL(window.location.href);
-  const dataStr = url.searchParams.get("data");
-  if (!dataStr) return null;
-  try { 
-    const parsed = JSON.parse(decodeURIComponent(dataStr));
-    console.log("Viewer received data:", parsed);
-    return parsed;
-  } catch (e) { 
-    console.error("Failed to parse viewer data:", e);
-    return null; 
+
+  const key = url.searchParams.get("key");
+  if (key) {
+    try {
+      const result = await chrome.storage.local.get(key);
+      const data = result[key];
+      if (data) {
+        console.log("Viewer received data from storage:", data);
+        chrome.storage.local.remove(key);
+        return data;
+      }
+    } catch (e) {
+      console.error("Failed to retrieve data from storage:", e);
+    }
   }
+
+  const dataStr = url.searchParams.get("data");
+  if (dataStr) {
+    try {
+      const parsed = JSON.parse(decodeURIComponent(dataStr));
+      console.log("Viewer received data from URL:", parsed);
+      return parsed;
+    } catch (e) {
+      console.error("Failed to parse viewer data:", e);
+    }
+  }
+
+  return null;
 }
 
 function openPdfAtPage(pdfUrl, page, queryText) {
@@ -17,7 +57,6 @@ function openPdfAtPage(pdfUrl, page, queryText) {
   const url = new URL(pdfUrl);
   url.hash = `page=${page}`;
   if (queryText && queryText.length > 0) {
-    // Built-in viewer supports find=, some viewers use search=; set both.
     const encoded = encodeURIComponent(queryText.slice(0, 200));
     url.hash += `&find=${encoded}&search=${encoded}`;
   }
@@ -27,27 +66,31 @@ function openPdfAtPage(pdfUrl, page, queryText) {
 function renderLlmSummary(llm) {
   const el = document.getElementById("llmSummary");
   if (!el) return;
-  el.textContent = llm ? llm : "";
+  if (!llm) {
+    el.textContent = "";
+    return;
+  }
+  renderRichText(el, llm);
 }
 
 function renderSummary(summary, stats, pdfUrl) {
   console.log("Rendering summary:", { summary, stats, pdfUrl });
-  
+
   const meta = document.getElementById("meta");
   meta.textContent = `${stats.num_sentences} sentences, from ${stats.num_pages} pages (budget ${stats.max_words} words)`;
   const list = document.getElementById("summaryList");
   const empty = document.getElementById("empty");
   list.innerHTML = "";
-  
+
   if (!summary || summary.length === 0) {
     console.log("No summary items to render");
     if (empty) empty.style.display = "block";
     return;
   }
-  
+
   console.log(`Rendering ${summary.length} summary items`);
   if (empty) empty.style.display = "none";
-  
+
   summary.forEach((item, index) => {
     console.log(`Item ${index}:`, item);
     const li = document.createElement("li");
@@ -55,7 +98,8 @@ function renderSummary(summary, stats, pdfUrl) {
     li.title = `Click to go to page ${item.page} (double-click for context)`;
 
     const text = document.createElement("span");
-    text.textContent = item.text;
+    text.className = "item-text";
+    renderRichInline(text, item.text);
 
     const page = document.createElement("span");
     page.className = "page";
@@ -69,7 +113,6 @@ function renderSummary(summary, stats, pdfUrl) {
     li.appendChild(page);
     li.appendChild(score);
 
-    // Single click: navigate current active tab to the page
     li.addEventListener("click", async () => {
       try {
         const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
@@ -83,7 +126,6 @@ function renderSummary(summary, stats, pdfUrl) {
       }
     });
 
-    // Double click: open new tab at the page with search highlighting
     li.addEventListener("dblclick", () => {
       openPdfAtPage(pdfUrl, item.page, item.text);
     });
@@ -92,14 +134,14 @@ function renderSummary(summary, stats, pdfUrl) {
   });
 }
 
-(function init(){
+(async function init() {
   console.log("Viewer initializing...");
-  const payload = getQueryData();
+  const payload = await getQueryData();
   if (!payload) {
     console.error("No payload received");
     return;
   }
-  
+
   console.log("Processing payload:", payload);
   renderLlmSummary(payload.llm || "");
   renderSummary(
